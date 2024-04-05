@@ -15,6 +15,15 @@ gss_tbl <- gss_import_tbl[, colSums(is.na(gss_import_tbl)) <
                             .75 * nrow(gss_import_tbl)] %>% 
   mutate_all(as.numeric)
 
+# Visualization
+gss_tbl %>%
+  ggplot(aes(x=MOSTHRS)) +
+  geom_histogram(fill = "lightblue", color = "darkblue") +
+  labs(title = "Distribution of Work Hours",
+       x = "Work Hours",
+       y = "Frequency") +
+  theme_bw()
+
 # Analysis
 holdout_indices <- createDataPartition(
   gss_tbl$MOSTHRS,
