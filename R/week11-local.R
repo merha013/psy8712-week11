@@ -43,6 +43,7 @@ train_folds <- createFolds(train_tbl$MOSTHRS)
 
 ## ORIGIONAL (non-parallelized version of code)
 tic()
+set.seed(8712)
 model1 <- train( 
   MOSTHRS ~ ., #using MOSTHRS instead of work_hours since I didn't rename it
   train_tbl,
@@ -54,9 +55,10 @@ model1 <- train(
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model1_time <-  toc() # 4.45 sec elapsed
+model1_time <-  toc() # 5.58 sec elapsed
 
 tic()
+set.seed(8712)
 model2 <- train(
   MOSTHRS ~ .,
   train_tbl,
@@ -68,9 +70,10 @@ model2 <- train(
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model2_time <-  toc() # 8.99 sec elapsed
+model2_time <-  toc() # 10.17 sec elapsed
 
 tic()
+set.seed(8712)
 model3 <- train(
   MOSTHRS ~ .,
   train_tbl,
@@ -82,22 +85,22 @@ model3 <- train(
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model3_time <-  toc() # 82.18 sec elapsed
+model3_time <-  toc() # 85.1 sec elapsed
 
 tic()
+set.seed(8712)
 model4 <- train(
   MOSTHRS ~ .,
   train_tbl,
   method="xgbLinear",
   na.action = na.pass,
-  tuneLength = 1,
   preProcess = c("center","scale","zv","nzv","medianImpute"),
   trControl = trainControl(method="cv", 
                            number=10, 
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model4_time <-  toc() # 7.02 sec elapsed
+model4_time <-  toc() # 244.69 sec elapsed
 
 ## PARALLELIZED
 local_cluster <- makeCluster(detectCores() - 1) 
@@ -106,6 +109,7 @@ registerDoParallel(local_cluster)
   ## signals to R that anytime something can be parrallelized, to do so.
 
 tic()
+set.seed(8712)
 model1.par <- train( 
   MOSTHRS ~ ., #using MOSTHRS instead of work_hours since I didn't rename it
   train_tbl,
@@ -117,9 +121,10 @@ model1.par <- train(
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model1.par_time <-  toc() # 10.14 sec elapsed
+model1.par_time <-  toc() # 5.95 sec elapsed
 
 tic()
+set.seed(8712)
 model2.par <- train(
   MOSTHRS ~ .,
   train_tbl,
@@ -131,9 +136,10 @@ model2.par <- train(
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model2.par_time <-  toc() # 4.14 sec elapsed
+model2.par_time <-  toc() # 2.2 sec elapsed
 
 tic()
+set.seed(8712)
 model3.par <- train(
   MOSTHRS ~ .,
   train_tbl,
@@ -145,57 +151,58 @@ model3.par <- train(
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model3.par_time <-  toc() # 73.49 sec elapsed
+model3.par_time <-  toc() # 61.3 sec elapsed
 
 tic()
+set.seed(8712)
 model4.par <- train(
   MOSTHRS ~ .,
   train_tbl,
   method="xgbLinear",
   na.action = na.pass,
-  tuneLength = 1,
   preProcess = c("center","scale","zv","nzv","medianImpute"),
   trControl = trainControl(method="cv", 
                            number=10, 
                            verboseIter=T, 
                            indexOut = train_folds)
 )
-model4.par_time <-  toc() # 4.56 sec elapsed
+model4.par_time <-  toc() # 135.64 sec elapsed
 
 stopCluster(local_cluster)
 registerDoSEQ()
 
+
+# Publication
 ## Show details from each of the models
 model1
 cv_model1 <- model1$results$Rsquared
 holdout_model1 <- cor(predict(model1, test_tbl, na.action = na.pass),
-  test_tbl$MOSTHRS)^2
+                      test_tbl$MOSTHRS)^2
 
 model2
 cv_model2 <- max(model2$results$Rsquared)
 holdout_model2 <- cor(predict(model2, test_tbl, na.action = na.pass),
-  test_tbl$MOSTHRS)^2
+                      test_tbl$MOSTHRS)^2
 
 model3
 cv_model3 <- max(model3$results$Rsquared)
 holdout_model3 <- cor(predict(model3, test_tbl, na.action = na.pass),
-  test_tbl$MOSTHRS)^2
+                      test_tbl$MOSTHRS)^2
 
 model4
 cv_model4 <- max(model4$results$Rsquared)
 holdout_model4 <- cor(predict(model4, test_tbl, na.action = na.pass),
-  test_tbl$MOSTHRS)^2
+                      test_tbl$MOSTHRS)^2
 
 summary(resamples(list(model1, model2, model3, model4)), metric="Rsquared")
 dotplot(resamples(list(model1, model2, model3, model4)), metric="Rsquared")
 
-# Publication
 ## I reverted to my previous version of this table before I put everything 
 ## into a loop.
 table1_tbl <- tibble(
-  algo = c("OLS regression", 
-           "elastic net", 
-           "random forest", 
+  algo = c("OLS Regression", 
+           "Elastic Net", 
+           "Random Forest", 
            "eXtreme Gradient Boosting"),
   cv_rsq = c(
     str_remove(formatC(cv_model1, format = 'f', digits = 2), "^0"),
@@ -210,9 +217,9 @@ table1_tbl <- tibble(
   )
 
 table2_tbl <- tibble(
-  algo = c("OLS regression", 
-           "elastic net", 
-           "random forest", 
+  algo = c("OLS Regression", 
+           "Elastic Net", 
+           "Random Forest", 
            "eXtreme Gradient Boosting"),
   original = (c(as.numeric(abs(model1_time$tic-model1_time$toc)), 
                 as.numeric(abs(model2_time$tic-model2_time$toc)), 
@@ -226,10 +233,21 @@ table2_tbl <- tibble(
 
 # Questions
 # 1. Which models benefited most from parallelization and why?
-## Everything but OLS regression benefited from parallelization, but random forest benefited the most because it also took the most time to run the code origionally.
+## Everything but OLS regression strongly benefited from parallelization, but 
+## eXtreme Gradient Boosting benefited the most since it also had the longest
+## origional run time, and parallelization nearly cut the processing time in 
+## half.
 
 # 2. How big was the difference between the fastest and slowest parallelized model? Why?
-## The fastest parallelized models (elastic net and eXtreme gradient boosting) took just over 4 seconds where as OLS regression took over 10 seconds and random forest took over 73 seconds. ...
+## First, I ran the code multiple times, and each time the processing time was 
+## different and varied by several seconds. In the final version I just ran, the ## fastest parallelized model, Elastic Net, took under 3 seconds! Meanwhile, 
+## eXtreme Gradient Boosting still took the longest, as expected becuase it is 
+## the most complex. Additionally, OLS regression, actually took slightly longer ## under parallelization compared to the origional due to the unnecessary 
+## overhead time added to run the code. 
 
 # 3. If your supervisor asked you to pick a model for use in a production model, which would you recommend and why? Consider both Table 1 and Table 2 when providing an answer.
-## I would recommend using random forest via parallelization as it resulted in the largest R^2 value and took lest time to run the code than when not using parallelization.
+## I would recommend using random forest via parallelization as it resulted in 
+## the R^2 value for cross validation was nearly as high as that for eXtreme 
+## Gradient Boosting, and it had a more reasonable processing time than 
+## xgbLinear. Additionally, random forest also had the highest holdout R^2 
+## value.
