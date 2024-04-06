@@ -86,7 +86,9 @@ model4 <- train(
 model4_time <-  toc()
 
 ## PARALLELIZED
-local_cluster <- makeCluster(127) # amdsmall cores per node (128) - 1 
+local_cluster <- makeCluster(detectCores() - 1) 
+  ## amdsmall has 1 node with 128 cores per node
+  ## but 127 (128-1) seems like  a lot of cores to be using. 
 registerDoParallel(local_cluster)
 
 tic()
@@ -170,9 +172,6 @@ cv_model4 <- max(model4$results$Rsquared)
 holdout_model4 <- cor(predict(model4, test_tbl, na.action = na.pass),
                       test_tbl$MOSTHRS)^2
 
-summary(resamples(list(model1, model2, model3, model4)), metric="Rsquared")
-dotplot(resamples(list(model1, model2, model3, model4)), metric="Rsquared")
-
 Table_3 <- tibble(
   algo = c("OLS Regression", 
            "Elastic Net", 
@@ -206,8 +205,8 @@ Table_4 <- tibble(
 )
 
 # Save Files
-write_csv(Table_3, "table3.csv")
-table4.csv(Table_4, "table4.csv")
+write_csv(Table_3, "../out/table3.csv")
+write_csv(Table_4, "../out/table4.csv")
 
 # Questions
 # 1. Which models benefited most from moving to the supercomputer and why?
