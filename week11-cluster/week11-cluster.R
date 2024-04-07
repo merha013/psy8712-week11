@@ -86,7 +86,7 @@ model4 <- train(
 model4_time <-  toc()
 
 ## PARALLELIZED
-local_cluster <- makeCluster(detectCores() - 1) 
+local_cluster <- makeCluster(25) 
   ## amdsmall has 1 node with 128 cores per node
   ## but 127 (128-1) seems like  a lot of cores to be using. 
 registerDoParallel(local_cluster)
@@ -198,7 +198,7 @@ Table_4 <- tibble(
                 as.numeric(abs(model2_time$tic-model2_time$toc)), 
                 as.numeric(abs(model3_time$tic-model3_time$toc)), 
                 as.numeric(abs(model4_time$tic-model4_time$toc)))),
-  supercomputer_127 = c(as.numeric(abs(model1.par_time$tic-model1.par_time$toc)), 
+  supercomputer_25 = c(as.numeric(abs(model1.par_time$tic-model1.par_time$toc)), 
                    as.numeric(abs(model2.par_time$tic-model2.par_time$toc)), 
                    as.numeric(abs(model3.par_time$tic-model3.par_time$toc)), 
                    as.numeric(abs(model4.par_time$tic-model4.par_time$toc)))
